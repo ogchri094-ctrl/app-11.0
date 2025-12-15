@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👵 Clientes PRO</title>
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+:root{
+  --verde:#2e7d32;
+  --rojo:#d32f2f;
+  --azul:#1976d2;
+  --bg:#f2f4f8;
+}
+
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{margin:0;background:var(--bg)}
+
+header{
+  background:var(--verde);
+  color:white;
+  padding:14px;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+header h1{text-align:center;margin:0;font-size:1.5rem}
+
+.header-tools{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+  position:relative;
+}
+
+header input{
+  flex:1;
+  padding:14px 40px 14px 14px;
+  font-size:16px;
+  border-radius:14px;
+  border:none;
+}
+
+header button{
+  border:none;
+  border-radius:14px;
+  padding:14px;
+  font-size:18px;
+  cursor:pointer;
+}
+
+header a{
+  background:white;
+  color:var(--verde);
+  padding:14px;
+  border-radius:14px;
+  font-weight:bold;
+  text-decoration:none;
+  font-size:16px;
+}
+
+/* Botón ❌ dentro del input */
+#clearSearch{
+  position:absolute;
+  right:60px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  font-size:20px;
+  display:none;
+  color:#555;
+}
+
+.sugerencias{
+  position:absolute;
+  top:60px;
+  left:0;
+  right:0;
+  background:white;
+  border-radius:14px;
+  box-shadow:0 6px 16px rgba(0,0,0,.2);
+  display:none;
+  z-index:20;
+}
+
+.sugerencias div{
+  padding:12px 14px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+}
+
+.sugerencias div:hover{background:#f1f1f1}
+
+.resaltado{
+  background:#fff59d;
+  padding:2px 4px;
+  border-radius:6px;
+}
+
+main{padding:15px}
+
+.form,.card{
+  background:white;
+  padding:18px;
+  border-radius:20px;
+  margin-bottom:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+
+.form input,.form button{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  margin:6px 0;
+  border-radius:14px;
+  border:1px solid #ccc;
+}
+
+.form button{
+  background:var(--verde);
+  color:white;
+  font-weight:bold;
+  border:none;
+  cursor:pointer;
+}
+
+.card.alerta{
+  border:3px solid var(--rojo);
+  animation:pulse 1.5s infinite;
+}
+
+@keyframes pulse{
+  0%{box-shadow:0 0 0 rgba(211,47,47,.3)}
+  50%{box-shadow:0 0 15px rgba(211,47,47,.6)}
+  100%{box-shadow:0 0 0 rgba(211,47,47,.3)}
+}
+
+.acciones{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  margin-top:10px;
+}
+
+button{
+  padding:14px;
+  font-size:16px;
+  border:none;
+  border-radius:14px;
+  font-weight:bold;
+}
+
+.mov{background:var(--verde);color:white}
+.del{background:var(--rojo);color:white}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  justify-content:center;
+  align-items:center;
+  z-index:50;
+}
+
+.modal-content{
+  background:white;
+  width:95%;
+  max-width:600px;
+  padding:20px;
+  border-radius:20px;
+}
+
+.monto{
+  font-size:20px;
+  text-align:center;
+  padding:16px;
+  border-radius:16px;
+  border:2px solid var(--verde);
+}
+
+.historial{
+  max-height:220px;
+  overflow-y:auto;
+  margin-top:10px;
+}
+
+.item{
+  border-bottom:1px solid #ddd;
+  padding:8px 0;
+}
+
+.mov-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.mov-actions{
+  display:flex;
+  gap:12px;
+}
+
+.mov-actions i{
+  font-size:20px;
+  cursor:pointer;
+  color:#555;
+}
+
+.mov-actions i:hover{color:var(--azul)}
+
+.verde{color:var(--verde)}
+.rojo{color:var(--rojo)}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>👵 Clientes Abuelita</h1>
+  <div class="header-tools">
+    <input id="search" placeholder="🔍 Buscar cliente, producto o ubicación">
+    <span id="clearSearch">❌</span>
+    <button onclick="vozBuscar()"><i class="ri-mic-line"></i></button>
+    <a href="graphics.html">📊</a>
+  </div>
+</header>
+
+<div id="sugerencias" class="sugerencias"></div>
+
+<main>
+
+<section class="form">
+  <h2>➕ Nuevo cliente</h2>
+  <input id="nombre" placeholder="Nombre">
+  <input id="producto" placeholder="Producto">
+  <input id="ubicacion" placeholder="Ubicación">
+  <input id="deuda" type="number" placeholder="Deuda inicial">
+  <button onclick="agregarCliente()">Guardar</button>
+</section>
+
+<div id="clientes"></div>
+
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h2 id="modalNombre"></h2>
+
+    <input id="monto" class="monto" type="number" placeholder="Monto">
+
+    <button class="mov" onclick="movimiento('abono')">💵 Abonar</button>
+    <button style="background:#fbc02d" onclick="movimiento('deuda')">➕ Nueva deuda</button>
+
+    <div class="historial" id="historial"></div>
+
+    <button style="background:var(--azul);color:white" onclick="ticket()">📄 PDF</button>
+    <button class="del" onclick="cerrar()">Cerrar</button>
+  </div>
+</div>
+
+<script>
+let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+let actual = null;
+
+const clientesDiv = document.getElementById('clientes');
+const sugerenciasDiv = document.getElementById('sugerencias');
+const searchInput = document.getElementById('search');
+const clearSearch = document.getElementById('clearSearch');
+const modal = document.getElementById('modal');
+const modalNombre = document.getElementById('modalNombre');
+const historial = document.getElementById('historial');
+const monto = document.getElementById('monto');
+
+const normalizar = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+/* HISTORIAL BUSQUEDAS */
+const HIST_KEY = 'historialBusquedas';
+let historialBusquedas = JSON.parse(localStorage.getItem(HIST_KEY)) || [];
+
+function guardarHistorialFinal(texto){
+  texto = texto.trim();
+  if(!texto) return;
+  historialBusquedas = historialBusquedas.filter(h => h !== texto);
+  historialBusquedas.unshift(texto);
+  historialBusquedas = historialBusquedas.slice(0,8);
+  localStorage.setItem(HIST_KEY, JSON.stringify(historialBusquedas));
+}
+
+function mostrarHistorial(){
+  sugerenciasDiv.innerHTML = '';
+
+  if(historialBusquedas.length){
+    const borrar = document.createElement('div');
+    borrar.innerHTML = '🗑️ <b>Borrar historial</b>';
+    borrar.style.color = '#d32f2f';
+    borrar.onclick = ()=>{
+      historialBusquedas = [];
+      localStorage.removeItem(HIST_KEY);
+      sugerenciasDiv.style.display = 'none';
+    };
+    sugerenciasDiv.appendChild(borrar);
+  }
+
+  historialBusquedas.forEach(h=>{
+    const d = document.createElement('div');
+    d.textContent = '🕘 ' + h;
+    d.onclick = ()=>{
+      searchInput.value = h;
+      searchInput.dispatchEvent(new Event('input'));
+      sugerenciasDiv.style.display = 'none';
+      actualizarTache();
+    };
+    sugerenciasDiv.appendChild(d);
+  });
+
+  sugerenciasDiv.style.display = historialBusquedas.length ? 'block' : 'none';
+}
+
+/* TACHE ❌ */
+function actualizarTache(){
+  clearSearch.style.display = searchInput.value ? 'inline-block' : 'none';
+}
+clearSearch.addEventListener('click', ()=>{
+  searchInput.value='';
+  searchInput.dispatchEvent(new Event('input'));
+  actualizarTache();
+  clientes.forEach(c=>c.marcado=false);
+  pintar(clientes);
+});
+
+/* VOZ */
+let recognition = null;
+let vozActiva = false;
+let vozTimeout = null;
+
+function vozBuscar(){
+  if(!('webkitSpeechRecognition' in window)) return;
+
+  if(vozActiva){
+    recognition.stop();
+    return;
+  }
+
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = 'es-MX';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  vozActiva = true;
+
+  recognition.onresult = e=>{
+    clearTimeout(vozTimeout);
+
+    const texto = Array.from(e.results)
+      .map(r=>r[0].transcript)
+      .join('');
+
+    searchInput.value = texto;
+    searchInput.dispatchEvent(new Event('input'));
+    actualizarTache();
+
+    vozTimeout = setTimeout(()=>{
+      recognition.stop();
+    },100);
+  };
+
+  recognition.onend = ()=>{
+    vozActiva = false;
+    guardarHistorialFinal(searchInput.value);
+  };
+
+  recognition.start();
+}
+
+/* INPUT */
+let escribirTimeout = null;
+searchInput.addEventListener('input', ()=>{
+  clearTimeout(escribirTimeout);
+  escribirTimeout = setTimeout(()=>{
+    guardarHistorialFinal(searchInput.value);
+  },300);
+  actualizarTache();
+});
+
+searchInput.addEventListener('focus', ()=>{
+  if(vozActiva && recognition) recognition.stop();
+  if(!searchInput.value) mostrarHistorial();
+});
+
+/* FUNCIONES CLIENTES */
+function guardar(){localStorage.setItem('clientes',JSON.stringify(clientes))}
+
+function agregarCliente(){
+  if(!nombre.value) return;
+  const saldo=Number(deuda.value)||0;
+  clientes.push({
+    id:Date.now(),
+    nombre:nombre.value,
+    producto:producto.value,
+    ubicacion:ubicacion.value,
+    saldo,
+    movs: saldo>0?[{tipo:'deuda',monto:saldo,fecha:new Date().toISOString()}]:[]
+  });
+  guardar(); pintar();
+  nombre.value=producto.value=ubicacion.value=deuda.value='';
+}
+
+function pintar(lista=clientes){
+  clientesDiv.innerHTML='';
+  lista.forEach(c=>{
+    clientesDiv.innerHTML+=`
+    <div class="card ${c.saldo>0?'alerta':''} ${c.marcado?'resaltado':''}">
+      <h3>${resaltar(c.nombre)}</h3>
+      <p>${resaltar(c.producto)} - ${resaltar(c.ubicacion)}</p>
+      <p><b>Deuda:</b>
+        <span class="${c.saldo>0?'rojo':'verde'}">$${c.saldo}</span>
+      </p>
+      <div class="acciones">
+        <button class="mov" onclick="abrir(${c.id})">
+          <i class="ri-wallet-3-line"></i> Movimientos
+        </button>
+        <button class="del" onclick="eliminar(${c.id})">
+          <i class="ri-delete-bin-6-line"></i>
+        </button>
+      </div>
+    </div>`;
+  });
+}
+
+/* Resaltar coincidencias */
+function resaltar(texto){
+  const t = searchInput.value.trim();
+  if(!t) return texto;
+  const re = new RegExp(`(${t})`,'gi');
+  return texto.replace(re, `<span class="resaltado">$1</span>`);
+}
+
+function abrir(id){
+  actual=clientes.find(c=>c.id===id);
+  modalNombre.textContent=actual.nombre;
+  modal.style.display='flex';
+  recalcular(); cargarHistorial();
+}
+
+function cerrar(){modal.style.display='none'}
+
+function movimiento(tipo){
+  const m=Number(monto.value);
+  if(m<=0) return;
+  actual.movs.push({tipo,monto:m,fecha:new Date().toISOString()});
+  recalcular(); guardar(); pintar(); cargarHistorial();
+  monto.value='';
+}
+
+function recalcular(){
+  let s=0;
+  actual.movs.forEach(m=>{
+    s+=m.tipo==='deuda'?m.monto:-m.monto;
+    m.total=s;
+  });
+  actual.saldo=s;
+}
+
+function cargarHistorial(){
+  historial.innerHTML='';
+  actual.movs.forEach((m,i)=>{
+    historial.innerHTML+=`
+    <div class="item mov-row">
+      <div>
+        ${new Date(m.fecha).toLocaleString()}<br>
+        <span class="${m.tipo==='abono'?'verde':'rojo'}">
+          ${m.tipo==='abono'?'−':'+'}$${m.monto}
+        </span><br>
+        <b>Total:</b>
+        <span class="${m.total>0?'rojo':'verde'}">$${m.total}</span>
+      </div>
+      <div class="mov-actions">
+        <i class="ri-edit-2-line" onclick="editarMov(${i})"></i>
+        <i class="ri-delete-bin-6-line" onclick="borrarMov(${i})"></i>
+      </div>
+    </div>`;
+  });
+}
+
+function editarMov(i){
+  const n=prompt('Nuevo monto',actual.movs[i].monto);
+  if(!n) return;
+  actual.movs[i].monto=Number(n);
+  recalcular(); guardar(); pintar(); cargarHistorial();
+}
+
+function borrarMov(i){
+  if(!confirm('¿Eliminar movimiento?')) return;
+  actual.movs.splice(i,1);
+  recalcular(); guardar(); pintar(); cargarHistorial();
+}
+
+/* PDF real */
+function ticket(){
+  let contenido = `
+    <h2>Estado de Cuenta: ${actual.nombre}</h2>
+    <p>Producto: ${actual.producto} - Ubicación: ${actual.ubicacion}</p>
+    <table border="1" style="width:100%;border-collapse:collapse;margin-top:10px">
+      <tr>
+        <th>Fecha</th><th>Tipo</th><th>Monto</th><th>Total</th>
+      </tr>
+      ${actual.movs.map(m=>`
+        <tr>
+          <td>${new Date(m.fecha).toLocaleString()}</td>
+          <td>${m.tipo}</td>
+          <td>${m.tipo==='abono'?'−':'+'}$${m.monto}</td>
+          <td>$${m.total}</td>
+        </tr>
+      `).join('')}
+    </table>
+    <h3>Total Deuda: $${actual.saldo}</h3>
+  `;
+  const div = document.createElement('div');
+  div.innerHTML = contenido;
+  html2pdf().from(div).set({margin:10,filename:`${actual.nombre}_EstadoCuenta.pdf`,html2canvas:{scale:2}}).save();
+}
+
+function eliminar(id){
+  if(confirm('¿Eliminar cliente?')){
+    clientes=clientes.filter(c=>c.id!==id);
+    guardar(); pintar();
+  }
+}
+
+/* BUSCADOR INTELIGENTE */
+searchInput.addEventListener('input', e => {
+  const texto = normalizar(e.target.value);
+
+  if(!texto){
+    clientes.forEach(c=>c.marcado=false);
+    sugerenciasDiv.style.display='none';
+    pintar(clientes);
+    return;
+  }
+
+  // Filtrar clientes por nombre, producto o ubicación
+  const filtrados = clientes.map(c=>{
+    const nom = normalizar(c.nombre);
+    const prod = normalizar(c.producto);
+    const ubi = normalizar(c.ubicacion);
+    const coincide = nom.includes(texto) || prod.includes(texto) || ubi.includes(texto);
+    return {...c, marcado: coincide};
+  });
+
+  const soloMarcados = filtrados.filter(c=>c.marcado);
+  pintar(soloMarcados);
+
+  // Sugerencias
+  sugerenciasDiv.innerHTML='';
+  soloMarcados.slice(0,5).forEach(c=>{
+    const d = document.createElement('div');
+    d.innerHTML = `${resaltar(c.nombre)} – ${resaltar(c.producto)} – ${resaltar(c.ubicacion)}`;
+    d.onclick = ()=>{
+      searchInput.value = c.nombre;
+      clientes.forEach(cli=>cli.marcado=false);
+      c.marcado = true;
+      pintar([c]);
+      sugerenciasDiv.style.display='none';
+      actualizarTache();
+    };
+    sugerenciasDiv.appendChild(d);
+  });
+
+  sugerenciasDiv.style.display = soloMarcados.length ? 'block' : 'none';
+});
+
+pintar();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 Análisis de Clientes</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Segoe UI;background:#f2f4f8;margin:0;padding:20px}
+.card{background:white;padding:20px;border-radius:20px;margin-bottom:20px}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Clientes que más deben</h2>
+<div class="card">
+  <canvas id="grafica"></canvas>
+</div>
+
+<script>
+const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+const top = [...clientes]
+  .sort((a,b)=>b.saldo-a.saldo)
+  .slice(0,5);
+
+new Chart(grafica,{
+  type:'bar',
+  data:{
+    labels: top.map(c=>c.nombre),
+    datasets:[{
+      label:'Deuda',
+      data: top.map(c=>c.saldo)
+    }]
+  }
+});
+</script>
+
+</body>
+</html>
